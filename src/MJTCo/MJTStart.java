@@ -27,10 +27,8 @@ public class MJTStart extends JFrame {
     private LogPanel log;
     private UsersPanel users;
     private CommandPanel command;
-    private  JScrollPane usersScroll;
-    private InetAddress myAddress ;
-
-
+    private JScrollPane usersScroll;
+    private InetAddress myAddress;
 
     public MJTStart() {
 
@@ -92,60 +90,68 @@ public class MJTStart extends JFrame {
         getContentPane().add(command, gc);
         getContentPane().repaint();
 
-        /* Storing the IP Address of the Server  */
-        try{
-            /* A socket is used to get local ip address 
-               getLocalAddress() returns 127.0.0.1 in general 
-               but as sockets connects to the gateway it retrieves the 
-               DHCP ip address 
+        /* Storing the IP Address of the Server */
+        try {
+            /*
+             * A socket is used to get local ip address
+             * getLocalAddress() returns 127.0.0.1 in general
+             * but as sockets connects to the gateway it retrieves the
+             * DHCP ip address
              */
             DatagramSocket socket = new DatagramSocket();
             socket.connect(InetAddress.getByName("8.8.8.8"), 10000);
             myAddress = socket.getLocalAddress();
             socket.close();
-        }catch (Exception e){JOptionPane.showMessageDialog(this, 
-            "Error retriveing Local host ","Error",JOptionPane.ERROR_MESSAGE);}
-    
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error retriveing Local host ", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
     }
 
     public static void main(String[] args) throws Exception {
 
         MJTStart mjt = new MJTStart();
         mjt.setVisible(true);
-        Pattern p =  Pattern.compile("[\\d+][\\.][\\d+][\\.][\\d+]");
-        Matcher m =  p.matcher(mjt.getMyAddress().getHostAddress());
-        
-        String subnet = m.toString();
-        System.out.println(subnet);
-        getConnectedDevices(subnet, mjt.getUsers(),mjt.getUsersScroll());
-        
+
+        String IpRegex = "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\." +
+                "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\." +
+                "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])";
+
+        Pattern p = Pattern.compile(IpRegex);
+
+        System.out.println("This machine IP: " + mjt.getMyAddress().getHostAddress());
+
+        Matcher m = p.matcher(mjt.getMyAddress().getHostAddress());
+
+        String subnet = "";
+        if (m.find())
+            subnet = m.group(); //must be used inside If statment
+        getConnectedDevices(subnet, mjt.getUsers(), mjt.getUsersScroll());
 
         // ServerSocket ss = new ServerSocket(5050);
         // Socket s = ss.accept();
 
     }
 
-    public static void getConnectedDevices(String subnet, UsersPanel users,JScrollPane scrollpane)
+    public static void getConnectedDevices(String subnet, UsersPanel users, JScrollPane scrollpane)
             throws UnknownHostException, IOException {
         /* code for chekcing connected devices */
-        int timeout =1000;
+        int timeout = 1000;
         for (int i = 1; i <= 138; i++) {
             String host = subnet + "." + i;
             System.out.println(host);
-            
+
             if (InetAddress.getByName(host).isReachable(timeout)) {
                 JLabel lbl = new JLabel("----- User " + host + " ----");
                 lbl.setBorder(BorderFactory.createEtchedBorder(2, Color.red, Color.PINK));
-                users.add(lbl);              
-                
+                users.add(lbl);
+
             }
-            
+
             users.revalidate();
             scrollpane.revalidate();
-    
-    
 
-            
         }
 
     }
@@ -182,7 +188,6 @@ public class MJTStart extends JFrame {
         this.usersScroll = usersScroll;
     }
 
-    
     public InetAddress getMyAddress() {
         return myAddress;
     }
