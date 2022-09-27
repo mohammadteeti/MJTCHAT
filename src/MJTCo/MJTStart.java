@@ -1,5 +1,7 @@
 package MJTCo;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.GridLayout;
 import java.io.IOException;
 import java.awt.Color;
@@ -23,7 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import org.w3c.dom.css.RGBColor;
+
 
 public class MJTStart extends JFrame {
 
@@ -33,6 +35,11 @@ public class MJTStart extends JFrame {
     private JScrollPane usersScroll;
     private static String myAddress;
     private static JButton refresh ;
+    String IpRegex;
+    static String subnet ="";
+    
+    
+
     public MJTStart() {
 
         getContentPane().setLayout(new GridBagLayout());
@@ -98,7 +105,6 @@ public class MJTStart extends JFrame {
             refresh.setSize(usersScroll.getWidth(), 80);
             refresh.setForeground(Color.BLUE);
             refresh.setBackground(Color.decode("#00ffee"));
-
         /* Storing the IP Address of the Server */
         try {
             /*
@@ -118,26 +124,40 @@ public class MJTStart extends JFrame {
 
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws UnknownHostException,IOException {
 
         MJTStart mjt = new MJTStart();
         mjt.setVisible(true);
-
-        String IpRegex = "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\." +
+        
+        mjt.IpRegex = "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\." +
                 "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\." +
                 "([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])";
-
-        Pattern p = Pattern.compile(IpRegex);
-
+        Pattern p = Pattern.compile(mjt.IpRegex);
+        Matcher m = p.matcher(myAddress);//retrievs xxx.xxx.xxx 
+        
+        
+        
         System.out.println("This machine IP: " + myAddress);
 
-        Matcher m = p.matcher(myAddress);//retrievs xxx.xxx.xxx 
-
-        String subnet = "";
+        subnet = "";
         if (m.find())
             subnet = m.group(); //must be used inside If statment
         getConnectedDevices(subnet, mjt.getUsers(), mjt.getUsersScroll());
 
+        refresh.addActionListener(new ActionListener(){
+            @Override 
+            public void actionPerformed(ActionEvent  e){
+            mjt.getUsers().removeAll();
+            try{
+            getConnectedDevices(subnet, mjt.getUsers(), mjt.getUsersScroll());
+            }catch(UnknownHostException  ex)
+            {
+                ex.printStackTrace();
+            }
+            catch (IOException ex1){
+                ex1.printStackTrace();
+            }
+    }});
         // ServerSocket ss = new ServerSocket(5050);
         // Socket s = ss.accept();
 
@@ -146,25 +166,7 @@ public class MJTStart extends JFrame {
     public static void getConnectedDevices(String subnet, UsersPanel users, JScrollPane scrollpane)
             throws UnknownHostException, IOException {
         
-            
-        // int timeout = 1000;
-        // for (int i = 1; i <= 138; i++) {
-        //     String host = subnet + "." + i;
-        //     System.out.println(host);
-        //     if (host.equals(myAddress)) // skip my own address 
-        //         continue;
-
-        //     if (InetAddress.getByName(host).isReachable(timeout)) {
-        //         JLabel lbl = new JLabel("----- User " + host + " ----");
-        //         lbl.setBorder(BorderFactory.createEtchedBorder(2, Color.red, Color.PINK));
-        //         users.add(lbl);
-
-        //     }
-
-        //     users.revalidate();
-        //     scrollpane.revalidate();
-
-        // }
+        /*Threading for faster Client Retrievementt */       
         Thread t1 = new Thread(new ChkClients(myAddress, subnet, 1, 20,users,scrollpane));
         Thread t2 = new Thread(new ChkClients(myAddress, subnet, 21, 40,users,scrollpane));
         Thread t3 = new Thread(new ChkClients(myAddress, subnet, 41, 60,users,scrollpane));
@@ -183,6 +185,8 @@ public class MJTStart extends JFrame {
         users.add(refresh);
         users.revalidate();
         users.repaint();
+       
+ 
 
 
         
